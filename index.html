@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GSAP Demo — 动画展示</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,500&family=Inter:wght@400;500;600&family=Noto+Serif+SC:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    /* ===== Reset & Base ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #fdfbf7;
+      --surface:  #ffffff;
+      --text:     #1a1a1a;
+      --muted:    #7a766e;
+      --border:   #e8e4dd;
+      --accent:   #b8452e;
+      --accent2:  #e8a87c;
+      --sage:     #2d4a3e;
+    }
+
+    body {
+      font-family: 'Inter', 'PingFang SC', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== Typography ===== */
+    .serif { font-family: 'Noto Serif SC', 'Playfair Display', Georgia, serif; }
+
+    /* ===== Shared ===== */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.85rem 2.2rem;
+      font-size: 0.95rem;
+      font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      letter-spacing: 0.02em;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-radius: 4px;
+    }
+    .btn-primary:hover { background: #9e3a25; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(184,69,46,0.25); }
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1.5px solid var(--border);
+      border-radius: 4px;
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ===== Hero ===== */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 4rem 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+      width: 100%;
+    }
+    .hero-text {
+      position: relative;
+      z-index: 2;
+    }
+    .hero-eyebrow {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+    }
+    .hero-title {
+      font-family: 'Noto Serif SC', 'Playfair Display', Georgia, serif;
+      font-size: clamp(2.8rem, 7vw, 4.5rem);
+      font-weight: 900;
+      line-height: 1.15;
+      margin-bottom: 1.5rem;
+      color: var(--text);
+    }
+    .hero-title em {
+      font-style: italic;
+      color: var(--accent);
+    }
+    .hero-desc {
+      font-size: 1.05rem;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 420px;
+      margin-bottom: 2.5rem;
+    }
+    .hero-buttons { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .hero-visual {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .hero-orb {
+      width: min(380px, 70vw);
+      height: min(380px, 70vw);
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 40%, var(--accent2), var(--accent));
+      opacity: 0.85;
+      filter: blur(60px);
+      position: absolute;
+    }
+    .hero-frame {
+      width: min(280px, 55vw);
+      height: min(360px, 70vw);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      position: relative;
+      z-index: 2;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem;
+    }
+    .hero-frame .dot-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 1.2rem;
+    }
+    .hero-frame .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+    }
+    .hero-frame .line {
+      height: 6px;
+      background: #f0ede6;
+      border-radius: 3px;
+      margin-bottom: 10px;
+    }
+    .hero-frame .line:nth-child(2) { width: 80%; }
+    .hero-frame .line:nth-child(3) { width: 60%; }
+    .hero-frame .line:nth-child(4) { width: 90%; }
+    .hero-frame .line:nth-child(5) { width: 45%; }
+    .hero-scroll {
+      position: absolute;
+      bottom: 2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--muted);
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      z-index: 2;
+      text-align: center;
+    }
+    .hero-scroll span {
+      display: block;
+      width: 1px;
+      height: 36px;
+      background: linear-gradient(to bottom, var(--muted), transparent);
+      margin: 0.6rem auto 0;
+    }
+
+    /* ===== Marquee strip ===== */
+    .marquee {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 1.5rem 0;
+      overflow: hidden;
+      white-space: nowrap;
+      background: var(--surface);
+    }
+    .marquee-inner {
+      display: inline-flex;
+      gap: 3rem;
+      font-family: 'Noto Serif SC', serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.04em;
+    }
+    .marquee-inner span {
+      opacity: 0.35;
+    }
+    .marquee-inner span.accent {
+      opacity: 1;
+      color: var(--accent);
+    }
+
+    /* ===== Cards ===== */
+    .cards-section {
+      padding: 8rem 0;
+    }
+    .section-header {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+    .section-title {
+      font-family: 'Noto Serif SC', 'Playfair Display', Georgia, serif;
+      font-size: clamp(2rem, 4.5vw, 2.8rem);
+      font-weight: 700;
+    }
+    .section-subtitle {
+      color: var(--muted);
+      margin-top: 0.75rem;
+      font-size: 1rem;
+    }
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2rem;
+      transition: box-shadow 0.3s, border-color 0.3s;
+    }
+    .card:hover {
+      border-color: transparent;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.06);
+    }
+    .card-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 3rem;
+      font-weight: 900;
+      color: #f0ede6;
+      line-height: 1;
+      margin-bottom: -0.5rem;
+    }
+    .card h3 {
+      font-family: 'Noto Serif SC', 'Playfair Display', serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .card p {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    /* ===== Stats ===== */
+    .stats-section {
+      height: 300vh;
+      position: relative;
+      background: var(--sage);
+      color: #d4dcd6;
+    }
+    .stats-wrapper {
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+    }
+    .stats-title {
+      font-family: 'Noto Serif SC', 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 3rem;
+    }
+    .stats-row {
+      display: flex;
+      gap: 4rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .stat-item { text-align: center; }
+    .stat-number {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(3rem, 7vw, 5rem);
+      font-weight: 900;
+      color: var(--accent2);
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: 0.9rem;
+      color: #a0b0a4;
+      margin-top: 0.4rem;
+      letter-spacing: 0.04em;
+    }
+    .progress-bar-wrap {
+      width: min(70%, 500px);
+      height: 3px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 2px;
+      margin-top: 3rem;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent2);
+      border-radius: 2px;
+    }
+
+    /* ===== CTA ===== */
+    .cta-section {
+      padding: 8rem 0;
+      text-align: center;
+    }
+    .cta-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--accent2);
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      margin-bottom: 1.5rem;
+    }
+    .cta-title {
+      font-family: 'Noto Serif SC', 'Playfair Display', serif;
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    .cta-text {
+      color: var(--muted);
+      max-width: 480px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.7;
+    }
+
+    /* ===== Footer ===== */
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      color: #c0bbb2;
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 768px) {
+      .hero .container {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+      }
+      .hero-visual { order: -1; }
+      .cards-grid { grid-template-columns: 1fr; }
+      .stats-row { gap: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-text">
+        <div class="hero-eyebrow">Animation Reimagined</div>
+        <h1 class="hero-title">用动画<br>讲好<em>每一个</em>故事</h1>
+        <p class="hero-desc">
+          GSAP 是业界最强大的 JavaScript 动画引擎。从微妙的微交互到复杂的滚动叙事，一切皆可编排。
+        </p>
+        <div class="hero-buttons">
+          <a href="#cards" class="btn btn-primary">探索功能</a>
+          <a href="https://gsap.com" target="_blank" class="btn btn-outline">GSAP 官网 →</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="hero-orb"></div>
+        <div class="hero-frame">
+          <div class="dot-row"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+          <div class="line"></div>
+          <div class="line"></div>
+          <div class="line"></div>
+          <div class="line"></div>
+          <div class="line"></div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-scroll">向下滚动<span></span></div>
+  </section>
+
+  <!-- ==================== MARQUEE ==================== -->
+  <div class="marquee">
+    <div class="marquee-inner">
+      <span class="accent">⚡</span><span>高性能</span>
+      <span class="accent">·</span><span>轻量级</span>
+      <span class="accent">·</span><span>零依赖</span>
+      <span class="accent">·</span><span>框架无关</span>
+      <span class="accent">·</span><span>滚动驱动</span>
+      <span class="accent">·</span><span>专业级缓动</span>
+      <span class="accent">·</span><span>高性能</span>
+      <span class="accent">·</span><span>轻量级</span>
+      <span class="accent">·</span><span>零依赖</span>
+      <span class="accent">·</span><span>框架无关</span>
+      <span class="accent">·</span><span>滚动驱动</span>
+      <span class="accent">·</span><span>专业级缓动</span>
+    </div>
+  </div>
+
+  <!-- ==================== CARDS ==================== -->
+  <section class="cards-section" id="cards">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-label">核心优势</div>
+        <h2 class="section-title">为什么是 GSAP</h2>
+        <p class="section-subtitle">六年打磨，数万开发者的选择</p>
+      </div>
+      <div class="cards-grid">
+        <div class="card">
+          <div class="card-num">01</div>
+          <h3>极致性能</h3>
+          <p>GSAP 动画性能比 CSS Animation 快 20 倍，远超所有 JS 动画库，60fps 稳如磐石。</p>
+        </div>
+        <div class="card">
+          <div class="card-num">02</div>
+          <h3>精准控制</h3>
+          <p>暂停、反转、跳转、变速——时间轴上的每一帧都在你的掌控之中。</p>
+        </div>
+        <div class="card">
+          <div class="card-num">03</div>
+          <h3>滚动叙事</h3>
+          <p>ScrollTrigger 将滚动位置与动画绑定，轻松构建沉浸式的滚动驱动体验。</p>
+        </div>
+        <div class="card">
+          <div class="card-num">04</div>
+          <h3>框架无关</h3>
+          <p>React、Vue、Svelte、原生 JS 通吃。一套 API，到处运行，零学习迁移成本。</p>
+        </div>
+        <div class="card">
+          <div class="card-num">05</div>
+          <h3>专业生态</h3>
+          <p>Flip、Draggable、SplitText、MorphSVG……专业级插件矩阵覆盖所有动画场景。</p>
+        </div>
+        <div class="card">
+          <div class="card-num">06</div>
+          <h3>响应式动画</h3>
+          <p>gsap.matchMedia() 按屏幕尺寸自适应动画逻辑，移动端与桌面各自精彩。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== STATS ==================== -->
+  <section class="stats-section">
+    <div class="stats-wrapper">
+      <h2 class="stats-title">数字会说话</h2>
+      <div class="stats-row">
+        <div class="stat-item">
+          <div class="stat-number" data-target="2000000">0</div>
+          <div class="stat-label">每周 NPM 下载</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" data-target="98">0</div>
+          <div class="stat-label">性能评分</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" data-target="12">0</div>
+          <div class="stat-label">年持续维护</div>
+        </div>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== CTA ==================== -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-badge">开始使用</div>
+      <h2 class="cta-title">只需一行 CDN，即刻开始</h2>
+      <p class="cta-text">
+        无需安装、无需构建工具，引入即用。让你的页面动起来，从未如此简单。
+      </p>
+      <a href="https://gsap.com/docs/v3/" target="_blank" class="btn btn-primary">查看文档 →</a>
+    </div>
+  </section>
+
+  <footer class="footer">
+    Built with GSAP & ScrollTrigger — CDN 零依赖
+  </footer>
+
+  <!-- ===== GSAP CDN ===== -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+    gsap.defaults({ duration: 0.7, ease: "power3.out" });
+    let mm = gsap.matchMedia();
+
+    // ========== HERO ==========
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+
+      gsap.from(".hero-eyebrow", {
+        y: 20, opacity: 0, duration: 0.6, delay: 0.2
+      });
+
+      gsap.from(".hero-title", {
+        y: 60, opacity: 0, duration: 0.9, delay: 0.3, ease: "power4.out"
+      });
+
+      gsap.from(".hero-desc", {
+        y: 24, opacity: 0, duration: 0.7, delay: 0.6
+      });
+
+      gsap.from(".hero-buttons .btn", {
+        y: 30, opacity: 0, stagger: 0.12, duration: 0.6, delay: 0.8, ease: "back.out(1.4)"
+      });
+
+      // 右侧装饰卡片
+      gsap.from(".hero-frame", {
+        y: 40, opacity: 0, rotation: -3, duration: 1, delay: 0.4, ease: "power4.out"
+      });
+
+      gsap.from(".hero-orb", {
+        scale: 0.6, opacity: 0, duration: 1.2, delay: 0.2, ease: "power3.out"
+      });
+
+      // 滚动提示浮动
+      gsap.to(".hero-scroll", {
+        y: 8, duration: 1.8, repeat: -1, yoyo: true, ease: "sine.inOut", delay: 1.2
+      });
+    });
+
+    // ========== MARQUEE 滚动 ==========
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      gsap.to(".marquee-inner", {
+        xPercent: -50,
+        duration: 20,
+        ease: "linear",
+        repeat: -1
+      });
+    });
+
+    // ========== CARDS 分批入场 ==========
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      ScrollTrigger.batch(".card", {
+        interval: 0.08,
+        batchMax: 3,
+        onEnter: (batch) => {
+          gsap.from(batch, {
+            y: 50, opacity: 0, stagger: 0.1, duration: 0.75, ease: "power3.out", overwrite: true
+          });
+        },
+        onLeaveBack: (batch) => {
+          gsap.set(batch, { y: 50, opacity: 0, overwrite: true });
+        },
+        start: "top 88%",
+        end: "bottom 25%"
+      });
+    });
+
+    // ========== STATS：Pin + Scrub ==========
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+
+      document.querySelectorAll(".stat-number").forEach(el => {
+        const target = +el.getAttribute("data-target");
+        gsap.to(el, {
+          textContent: target,
+          duration: 2,
+          ease: "power2.out",
+          snap: { textContent: 1 },
+          scrollTrigger: {
+            trigger: ".stats-section",
+            start: "top top",
+            end: "bottom bottom",
+            scrub: 1,
+            invalidateOnRefresh: true
+          }
+        });
+      });
+
+      gsap.to(".progress-bar-fill", {
+        width: "100%",
+        ease: "none",
+        scrollTrigger: {
+          trigger: ".stats-section",
+          start: "top top",
+          end: "bottom bottom",
+          scrub: true
+        }
+      });
+
+      ScrollTrigger.create({
+        trigger: ".stats-section",
+        start: "top top",
+        end: "bottom bottom",
+        pin: ".stats-wrapper",
+        pinSpacing: true
+      });
+    });
+
+    // ========== CTA ==========
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      gsap.from(".cta-section .cta-badge", {
+        scale: 0.9, opacity: 0, duration: 0.5,
+        scrollTrigger: { trigger: ".cta-section", start: "top 82%", toggleActions: "play none none none" }
+      });
+      gsap.from(".cta-section .cta-title", {
+        y: 30, opacity: 0, duration: 0.7, delay: 0.1,
+        scrollTrigger: { trigger: ".cta-section", start: "top 82%", toggleActions: "play none none none" }
+      });
+      gsap.from(".cta-section .cta-text", {
+        y: 20, opacity: 0, duration: 0.6, delay: 0.25,
+        scrollTrigger: { trigger: ".cta-section", start: "top 82%", toggleActions: "play none none none" }
+      });
+      gsap.from(".cta-section .btn", {
+        y: 20, opacity: 0, duration: 0.5, delay: 0.35,
+        scrollTrigger: { trigger: ".cta-section", start: "top 82%", toggleActions: "play none none none" }
+      });
+    });
+
+  </script>
+</body>
+</html>
