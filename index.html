@@ -46,7 +46,9 @@
     display: flex;
     flex-direction: column;
     -webkit-font-smoothing: antialiased;
+    touch-action: manipulation;
   }
+  body.panel-open { touch-action: none; }
 
   /* ========== TOP BAR — floating, minimal ========== */
   .topbar {
@@ -586,30 +588,105 @@
   }
 
   /* ========== RESPONSIVE ========== */
-  @media (max-width: 768px) {
-    .topbar {
-      top: 8px;
-      padding: 6px 10px 6px 14px;
-      gap: 4px;
-    }
-    .topbar .brand { font-size: 13px; }
-    .btn { padding: 4px 10px; font-size: 11px; }
 
+  /* ── 平板 / 小屏笔记本 ── */
+  @media (max-width: 1024px) {
+    .title-art { width: 180px; }
+    .panel { width: 300px; right: 12px; }
+    .panel-header h3 { font-size: 19px; }
+  }
+
+  /* ── 手机 (含大屏手机) ── */
+  @media (max-width: 768px) {
+    /* ---- TOPBAR ---- */
+    .topbar {
+      top: max(8px, env(safe-area-inset-top, 8px));
+      padding: 6px 10px;
+      gap: 2px;
+    }
+    .topbar .brand { display: none; }
+    .topbar .divider { display: none; }
+    .topbar .spot-count { font-size: 10px; }
+    .btn { padding: 5px 10px; font-size: 11px; min-height: 34px; }
+
+    /* ---- TITLE ART ---- */
+    .title-art { display: none; }
+
+    /* ---- MAP / MARKERS ---- */
+    .marker { transform: translate(-50%, -100%) scale(0.7); }
+    .marker:hover,
+    .marker.active { transform: translate(-50%, -100%) scale(0.88); }
+    .marker .label { font-size: 11px; padding: 3px 8px; bottom: 36px; }
+    .marker .pin { width: 30px; height: 34px; }
+    .marker .pin .head { width: 30px; height: 30px; }
+    .marker .pin .head .num { font-size: 11px; }
+
+    /* ---- LOCATION DOT ---- */
+    .location-dot .inner { width: 18px; height: 18px; border-width: 3px; box-shadow: 0 0 0 4px rgba(59,130,246,0.25); }
+    .location-label { font-size: 11px; padding: 3px 10px; top: 24px; }
+
+    /* ---- PANEL: BOTTOM DRAWER ---- */
     .panel {
-      right: 12px; left: 12px;
-      width: auto;
-      top: auto;
-      bottom: 12px;
-      transform: translateY(20px);
-      max-height: 50dvh;
+      right: 0; left: 0; bottom: 0; top: auto;
+      width: 100%;
+      max-height: 55dvh;
       border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      transform: translateY(100%);
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.55);
     }
     .panel.open { transform: translateY(0); }
+    .panel .panel-header { padding: 16px 16px 12px; }
+    .panel .panel-header h3 { font-size: 19px; }
+    .panel .panel-body { padding: 12px 16px 20px; }
+    .panel .panel-close { top: 12px; right: 12px; width: 36px; height: 36px; font-size: 18px; }
 
-    .zoom-ctrl { left: 12px; bottom: 16px; }
-    .zoom-ctrl button { width: 34px; height: 34px; font-size: 18px; }
-    .spot-list { left: 12px; bottom: 140px; width: 180px; }
+    /* 抽屉把手 */
+    .panel::before {
+      content: '';
+      display: block;
+      width: 40px; height: 4px;
+      margin: 8px auto 0;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.25);
+    }
+    /* backdrop darker on mobile */
+    .panel-backdrop { background: rgba(0,0,0,0.45); }
+
+    /* ---- ZOOM CONTROLS ---- */
+    .zoom-ctrl {
+      left: auto; right: 12px; bottom: 24px;
+      flex-direction: row;
+      gap: 6px;
+    }
+    .zoom-ctrl button { width: 36px; height: 36px; font-size: 18px; }
+
+    /* ---- SPOT LIST ---- */
     .spot-list-trigger { left: 12px; bottom: 100px; }
+    .spot-list { left: 12px; bottom: 140px; width: 180px; max-height: 280px; }
+
+    /* ---- BODY ---- */
+    body { overflow-x: hidden; }
+  }
+
+  /* ── 小屏手机 ── */
+  @media (max-width: 390px) {
+    .topbar { padding: 4px 6px; gap: 2px; }
+    .btn { padding: 4px 8px; font-size: 10px; min-height: 30px; }
+    .btn .icon { font-size: 11px; }
+    .topbar .spot-count { display: none; }
+
+    .panel { max-height: 65dvh; }
+    .panel .panel-header h3 { font-size: 17px; }
+    .panel .quick-facts { gap: 10px; flex-wrap: wrap; }
+
+    .marker { transform: translate(-50%, -100%) scale(0.6); }
+    .marker:hover,
+    .marker.active { transform: translate(-50%, -100%) scale(0.75); }
+
+    .zoom-ctrl { right: 8px; bottom: 16px; }
+    .zoom-ctrl button { width: 32px; height: 32px; font-size: 16px; }
+    .spot-list-trigger { left: 8px; bottom: 86px; }
+    .spot-list { left: 8px; bottom: 126px; width: 150px; }
   }
 </style>
 </head>
@@ -706,6 +783,7 @@ let scale = 0.78, offsetX = 0, offsetY = 0;
 let isDragging = false, dragStartX, dragStartY, startOffsetX, startOffsetY;
 let activeSpotId = null;
 let spotListOpen = false;
+let isPinching = false;  // 捏合手势进行中，禁用拖拽
 
 const IMG_W = 1358, IMG_H = 1159;
 
@@ -774,7 +852,7 @@ function zoomAt(cx, cy, factor) {
 
 // ========== DRAG ==========
 mapWrap.addEventListener('pointerdown', (e) => {
-  if (e.target.closest('.marker')) return;
+  if (e.target.closest('.marker') || isPinching) return;
   isDragging = true;
   mapWrap.classList.add('dragging');
   dragStartX = e.clientX; dragStartY = e.clientY;
@@ -800,6 +878,44 @@ mapWrap.addEventListener('wheel', (e) => {
   const rect = mapWrap.getBoundingClientRect();
   zoomAt(e.clientX - rect.left, e.clientY - rect.top, e.deltaY < 0 ? 1.1 : 1 / 1.1);
 }, { passive: false });
+
+// Pinch-to-zoom (touch)
+let pinchDist0 = 0, pinchScale0 = 1, pinchCX = 0, pinchCY = 0;
+mapWrap.addEventListener('touchstart', (e) => {
+  if (e.touches.length === 2) {
+    e.preventDefault();
+    isPinching = true;
+    pinchDist0 = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    pinchCX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+    pinchCY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+    pinchScale0 = scale;
+  }
+}, { passive: false });
+
+mapWrap.addEventListener('touchmove', (e) => {
+  if (e.touches.length === 2) {
+    e.preventDefault();
+    const d = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    if (pinchDist0 > 0 && d > 10) {
+      const rect = mapWrap.getBoundingClientRect();
+      const factor = d / pinchDist0;
+      const newScale = Math.min(Math.max(pinchScale0 * factor, 0.2), 4);
+      const cx = pinchCX - rect.left, cy = pinchCY - rect.top;
+      offsetX = cx - (cx - offsetX) * (newScale / scale);
+      offsetY = cy - (cy - offsetY) * (newScale / scale);
+      scale = newScale;
+      applyTransform();
+    }
+  }
+}, { passive: false });
+
+mapWrap.addEventListener('touchend', () => { pinchDist0 = 0; isPinching = false; });
 
 // ========== SPOT SELECTION ==========
 function selectSpot(id) {
@@ -836,11 +952,13 @@ function showPanel(s) {
   `;
   panel.classList.add('open');
   backdrop.classList.add('open');
+  document.body.classList.add('panel-open');
 }
 
 function closePanel() {
   panel.classList.remove('open');
   backdrop.classList.remove('open');
+  document.body.classList.remove('panel-open');
   if (activeSpotId) {
     document.getElementById(`marker-${activeSpotId}`)?.classList.remove('active');
     activeSpotId = null;
